@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_1.xsd"
+         version="6.1">
+
+    <display-name>Darija Translator REST Service</display-name>
+
+    <!--
+        Only callers authenticated with HTTP Basic (see @BasicAuthenticationMechanismDefinition
+        on TranslatorApplication) and holding the "translator-user" role may use the translator.
+        OPTIONS is left open so browser CORS pre-flight requests work.
+        /api/health stays public.
+    -->
+    <security-constraint>
+        <web-resource-collection>
+            <web-resource-name>Translator API</web-resource-name>
+            <url-pattern>/api/translator/*</url-pattern>
+            <http-method-omission>OPTIONS</http-method-omission>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>translator-user</role-name>
+        </auth-constraint>
+    </security-constraint>
+
+    <security-role>
+        <description>Users allowed to call TranslatorResource</description>
+        <role-name>translator-user</role-name>
+    </security-role>
+</web-app>

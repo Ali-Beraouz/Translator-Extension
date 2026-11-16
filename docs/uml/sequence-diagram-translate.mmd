@@ -1,0 +1,43 @@
+---
+title: Sequence Diagram - Translating selected text from the Chrome extension
+---
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant P as Web page (Chrome tab)
+    participant BG as background.js<br/>(service worker)
+    participant SP as Side panel<br/>(sidepanel.js + api.js)
+    box Payara Micro 7 (embedded container)
+        participant SEC as Jakarta Security<br/>Basic auth mechanism
+        participant IS as TranslatorIdentityStore
+        participant R as TranslatorResource
+        participant G as GeminiTranslationService
+    end
+    participant GEM as Google Gemini API
+
+    U->>P: select text, right-click
+    U->>BG: "Translate ... to Darija" (context menu)
+    BG->>SP: chrome.sidePanel.open()
+    BG->>P: scripting.executeScript(getSelection)
+    P-->>BG: exact selected text
+    BG->>SP: storage.session.set(pendingSelection)
+    SP->>SP: paste text into the text box
+    SP->>SEC: POST /darija/api/translator/translate<br/>Authorization: Basic YWxpOmRhcmlqYTIwMjY=<br/>{"text": "...", "script": "arabic"}
+    SEC->>IS: validate(UsernamePasswordCredential)
+
+    alt valid credentials
+        IS-->>SEC: VALID, groups = {translator-user}
+        SEC->>R: translate(TranslationRequest)
+        R->>R: validate text (not blank, at most 5000 chars)
+        R->>G: translate(text, ARABIC)
+        G->>GEM: POST /v1beta/models/gemini-3.8-flash:generateContent<br/>x-goog-api-key, system prompt + JSON schema
+        GEM-->>G: {"candidates":[{"content":{"parts":[{"text":"{detectedLanguage, translation}"}]}}]}
+        G->>G: GeminiResponseParser.parse()
+        G-->>R: TranslationResult
+        R-->>SP: 200 OK {sourceText, detectedLanguage, translation, script, model, durationMs}
+        SP-->>U: show Darija (right-to-left), Copy button
+    else wrong / missing credentials
+        IS-->>SEC: INVALID
+        SEC-->>SP: 401 Unauthorized<br/>WWW-Authenticate: Basic realm="darija-translator"
+        SP-->>U: "Wrong username or password"
+    end

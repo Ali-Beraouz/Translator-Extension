@@ -1,0 +1,25 @@
+# Java / Maven
+server/target/
+*.class
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDEs / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.env

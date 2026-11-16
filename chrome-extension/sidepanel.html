@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Darija Translator</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="top">
+    <img src="icons/icon48.png" alt="" class="logo">
+    <div>
+      <h1>Darija Translator</h1>
+      <p class="subtitle">Any language → الدارجة المغربية</p>
+    </div>
+    <span id="serverDot" class="dot" title="Server status: unknown"></span>
+  </header>
+
+  <main>
+    <section class="card">
+      <label for="sourceText" class="label">Text to translate</label>
+      <textarea id="sourceText" dir="auto" rows="6"
+                placeholder="Type or paste text here, or select text on any page → right-click → “Translate to Darija”."></textarea>
+      <div class="row between">
+        <span id="charCount" class="muted">0 / 5000</span>
+        <div class="segmented" role="radiogroup" aria-label="Darija script">
+          <input type="radio" name="script" id="scriptArabic" value="arabic" checked>
+          <label for="scriptArabic">العربية</label>
+          <input type="radio" name="script" id="scriptLatin" value="latin">
+          <label for="scriptLatin">Latin</label>
+        </div>
+      </div>
+      <div class="row">
+        <button id="translateBtn" class="primary" type="button">
+          <span class="btn-text">Translate</span><span class="spinner" aria-hidden="true"></span>
+        </button>
+        <button id="clearBtn" type="button">Clear</button>
+      </div>
+      <p class="hint">Ctrl + Enter to translate</p>
+    </section>
+
+    <div id="errorBox" class="error" role="alert" hidden></div>
+
+    <section id="resultCard" class="card result" hidden>
+      <div class="row between">
+        <span class="label">Darija</span>
+        <span id="detected" class="chip"></span>
+      </div>
+      <p id="translation" class="translation" lang="ary"></p>
+      <div class="row between">
+        <span id="meta" class="muted"></span>
+        <button id="copyBtn" type="button">Copy</button>
+      </div>
+    </section>
+
+    <details class="card settings" id="settings">
+      <summary>Settings</summary>
+      <label for="serverUrl" class="label">Server URL</label>
+      <input id="serverUrl" type="url" spellcheck="false">
+      <label for="username" class="label">Username</label>
+      <input id="username" type="text" autocomplete="username" spellcheck="false">
+      <label for="password" class="label">Password</label>
+      <input id="password" type="password" autocomplete="current-password">
+      <div class="row">
+        <button id="saveBtn" class="primary" type="button">Save</button>
+        <button id="testBtn" type="button">Test connection</button>
+      </div>
+      <p id="settingsMsg" class="muted"></p>
+    </details>
+  </main>
+
+  <footer>Mini Project 2 · Ali Beraouz (138123)</footer>
+
+  <script type="module" src="sidepanel.js"></script>
+</body>
+</html>

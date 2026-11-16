@@ -1,0 +1,166 @@
+---
+title: Class Diagram - Darija Translator REST Service (package ma.aui.darija)
+config:
+  layout: elk
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+    direction TB
+
+    class Application {
+        <<Jakarta REST>>
+    }
+    class TranslatorApplication {
+        <<@ApplicationPath("/api")>>
+        <<@BasicAuthenticationMechanismDefinition>>
+    }
+    Application <|-- TranslatorApplication
+
+    class TranslatorResource {
+        <<@Path("/translator")>>
+        ~TranslationService translationService
+        ~AppConfig config
+        +translate(TranslationRequest request) TranslationResponse
+        +translate(String text, String script) TranslationResponse
+    }
+    class HealthResource {
+        <<@Path("/health")>>
+        ~AppConfig config
+        +health() HealthStatus
+    }
+
+    class TranslationService {
+        <<interface>>
+        +translate(String text, DarijaScript script) TranslationResult
+        +modelName() String
+    }
+    class GeminiTranslationService {
+        <<@ApplicationScoped>>
+        ~AppConfig config
+        -HttpClient httpClient
+        ~init() void
+        +translate(String text, DarijaScript script) TranslationResult
+        +modelName() String
+    }
+    class PromptBuilder {
+        <<utility>>
+        +systemInstruction(DarijaScript script)$ String
+        +requestBody(String text, DarijaScript script)$ JsonObject
+    }
+    class GeminiResponseParser {
+        <<utility>>
+        +parse(String responseBody)$ TranslationResult
+        +errorMessage(String responseBody)$ String
+    }
+    TranslationService <|.. GeminiTranslationService
+    GeminiTranslationService ..> PromptBuilder : builds request
+    GeminiTranslationService ..> GeminiResponseParser : parses response
+
+    class AppConfig {
+        <<@ApplicationScoped>>
+        +geminiApiKey() String
+        +geminiModel() String
+        +geminiBaseUrl() String
+        +username() String
+        +password() String
+        +maxTextLength() int
+        +corsAllowedOrigin() String
+    }
+
+    class IdentityStore {
+        <<interface, Jakarta Security>>
+        +validate(Credential credential) CredentialValidationResult
+    }
+    class TranslatorIdentityStore {
+        <<@ApplicationScoped>>
+        +ROLE$ String = "translator-user"
+        ~AppConfig config
+        +validate(Credential credential) CredentialValidationResult
+    }
+    IdentityStore <|.. TranslatorIdentityStore
+
+    class ContainerResponseFilter {
+        <<interface, Jakarta REST>>
+    }
+    class CorsFilter {
+        <<@Provider>>
+        +filter(ContainerRequestContext, ContainerResponseContext) void
+    }
+    ContainerResponseFilter <|.. CorsFilter
+
+    class ExceptionMapper~E~ {
+        <<interface, Jakarta REST>>
+        +toResponse(E exception) Response
+    }
+    class ApiException {
+        -int status
+        +getStatus() int
+        +badRequest(String message)$ ApiException
+    }
+    class ApiExceptionMapper {
+        <<@Provider>>
+        +toResponse(ApiException e) Response
+    }
+    class WebApplicationExceptionMapper {
+        <<@Provider>>
+        +toResponse(WebApplicationException e) Response
+    }
+    RuntimeException <|-- ApiException
+    ExceptionMapper <|.. ApiExceptionMapper
+    ExceptionMapper <|.. WebApplicationExceptionMapper
+
+    class TranslationRequest {
+        <<record>>
+        +String text
+        +String script
+    }
+    class TranslationResponse {
+        <<record>>
+        +String sourceText
+        +String detectedLanguage
+        +String translation
+        +String script
+        +String model
+        +long durationMs
+    }
+    class TranslationResult {
+        <<record>>
+        +String detectedLanguage
+        +String translation
+    }
+    class ErrorResponse {
+        <<record>>
+        +int status
+        +String error
+        +String message
+    }
+    class HealthStatus {
+        <<record>>
+        +String status
+        +String model
+        +boolean geminiConfigured
+    }
+    class DarijaScript {
+        <<enumeration>>
+        ARABIC
+        LATIN
+        +parse(String value)$ DarijaScript
+        +label() String
+    }
+
+    TranslatorResource --> "1" TranslationService : uses
+    TranslatorResource --> "1" AppConfig
+    TranslatorResource ..> TranslationRequest : consumes
+    TranslatorResource ..> TranslationResponse : produces
+    TranslatorResource ..> DarijaScript
+    TranslatorResource ..> ApiException : throws
+    HealthResource --> "1" AppConfig
+    HealthResource ..> HealthStatus : produces
+    GeminiTranslationService --> "1" AppConfig
+    GeminiTranslationService ..> TranslationResult : returns
+    GeminiTranslationService ..> ApiException : throws
+    TranslatorIdentityStore --> "1" AppConfig
+    CorsFilter --> "1" AppConfig
+    ApiExceptionMapper ..> ErrorResponse : produces
+    WebApplicationExceptionMapper ..> ErrorResponse : produces

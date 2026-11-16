@@ -1,0 +1,121 @@
+{
+  "info": {
+    "name": "Darija Translator REST Service",
+    "description": "Mini Project 2 - Ali Beraouz (138123). Import into Postman (or Thunder Client). Set the baseUrl/username/password collection variables if you changed them.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "basic",
+    "basic": [
+      { "key": "username", "value": "{{username}}", "type": "string" },
+      { "key": "password", "value": "{{password}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/darija/api" },
+    { "key": "username", "value": "ali" },
+    { "key": "password", "value": "darija2026" }
+  ],
+  "item": [
+    {
+      "name": "1. Health (public, no login)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('status UP', () => pm.expect(pm.response.json().status).to.eql('UP'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "2. Translate (POST JSON, Arabic script)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"Hello, how are you? I would like a coffee please.\",\n  \"script\": \"arabic\"\n}" },
+        "url": "{{baseUrl}}/translator/translate"
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('200 OK', () => pm.response.to.have.status(200));",
+          "pm.test('has translation', () => pm.expect(pm.response.json().translation).to.be.a('string').and.not.empty);"
+        ] } }
+      ]
+    },
+    {
+      "name": "3. Translate (POST JSON, Latin script / Arabizi)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"Bonjour, où est la gare ?\",\n  \"script\": \"latin\"\n}" },
+        "url": "{{baseUrl}}/translator/translate"
+      }
+    },
+    {
+      "name": "4. Translate (GET query parameter)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/translator/translate?text=Good morning, my friend&script=arabic",
+          "host": [ "{{baseUrl}}" ],
+          "path": [ "translator", "translate" ],
+          "query": [
+            { "key": "text", "value": "Good morning, my friend" },
+            { "key": "script", "value": "arabic" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Without credentials -> 401",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\"text\": \"Hello\"}" },
+        "url": "{{baseUrl}}/translator/translate"
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+        ] } }
+      ]
+    },
+    {
+      "name": "6. Wrong password -> 401",
+      "request": {
+        "auth": { "type": "basic", "basic": [
+          { "key": "username", "value": "{{username}}", "type": "string" },
+          { "key": "password", "value": "wrong-password", "type": "string" }
+        ] },
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\"text\": \"Hello\"}" },
+        "url": "{{baseUrl}}/translator/translate"
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"
+        ] } }
+      ]
+    },
+    {
+      "name": "7. Empty text -> 400",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\"text\": \"   \"}" },
+        "url": "{{baseUrl}}/translator/translate"
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('400 Bad Request', () => pm.response.to.have.status(400));"
+        ] } }
+      ]
+    }
+  ]
+}

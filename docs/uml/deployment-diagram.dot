@@ -1,0 +1,81 @@
+// UML Deployment Diagram - Darija Translator
+// Render: dot -Tpng -Gdpi=150 deployment-diagram.dot -o deployment-diagram.png
+digraph Deployment {
+  graph [rankdir=LR, fontname="Helvetica", fontsize=20, labelloc=t, nodesep=0.5, ranksep=1.3, pad=0.4,
+         label=<<B>Deployment Diagram - LLM-powered Darija Translator</B><BR/><FONT POINT-SIZE="13">Mini Project 2 - Ali Beraouz (138123)</FONT>>];
+  node  [shape=box3d, style=filled, fillcolor="#f4f1ec", color="#5a544c", fontname="Helvetica", fontsize=12, margin=0.15];
+  edge  [fontname="Helvetica", fontsize=11, color="#5a544c", fontcolor="#333333"];
+
+  server [label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Server PC (developer laptop)</B><BR/>Windows / macOS / Linux</TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="8">
+        <TABLE BORDER="0" CELLSPACING="4">
+          <TR><TD><I>«execution environment»</I><BR/><B>JVM - Java 21</B></TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#fdf3f3" CELLPADDING="8">
+            <TABLE BORDER="0" CELLSPACING="4">
+              <TR><TD><I>«execution environment»</I><BR/><B>Payara Micro 7.2026.9</B><BR/>(embedded Jakarta EE 11 container, port 8080)</TD></TR>
+              <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6"><I>«artifact»</I><BR/><B>darija.war</B><BR/>context root /darija<BR/>TranslatorResource, GeminiTranslationService,<BR/>TranslatorIdentityStore (Basic auth)</TD></TR>
+            </TABLE>
+          </TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6"><I>«artifact»</I> <B>darija-microbundle.jar</B> (uber JAR)</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>>];
+
+  gemini [fillcolor="#eef3fb", label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Google Cloud</B></TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6"><I>«execution environment»</I><BR/><B>Gemini API</B><BR/>generativelanguage.googleapis.com</TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6"><I>«artifact»</I><BR/><B>gemini-3.8-flash</B> (LLM)</TD></TR>
+    </TABLE>>];
+
+  chrome [fillcolor="#eef7f1", label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Client PC</B></TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6">
+        <TABLE BORDER="0" CELLSPACING="4">
+          <TR><TD><I>«execution environment»</I><BR/><B>Google Chrome</B></TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#f7fbf8" CELLPADDING="5"><I>«artifact»</I><BR/><B>Chrome extension (MV3)</B><BR/>manifest.json, background.js,<BR/>sidepanel.html/js, api.js</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>>];
+  php [fillcolor="#eef7f1", label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Client PC</B></TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6">
+        <TABLE BORDER="0" CELLSPACING="4">
+          <TR><TD><I>«execution environment»</I><BR/><B>PHP 8 built-in server</B> (php -S :8000)</TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#f7fbf8" CELLPADDING="5"><I>«artifact»</I><BR/><B>PHP client</B><BR/>index.php, cli.php,<BR/>DarijaTranslatorClient.php</TD></TR>
+        </TABLE>
+      </TD></TR><TR><TD>used from a web browser</TD></TR>
+    </TABLE>>];
+  python [fillcolor="#eef7f1", label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Client PC</B></TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6">
+        <TABLE BORDER="0" CELLSPACING="4">
+          <TR><TD><I>«execution environment»</I><BR/><B>Python 3 interpreter</B></TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#f7fbf8" CELLPADDING="5"><I>«artifact»</I><BR/><B>darija_client.py</B> (CLI)</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>>];
+  phone [fillcolor="#eef7f1", label=<
+    <TABLE BORDER="0" CELLSPACING="6">
+      <TR><TD><I>«device»</I><BR/><B>Smartphone (Android / iOS)</B></TD></TR>
+      <TR><TD BORDER="1" BGCOLOR="#ffffff" CELLPADDING="6">
+        <TABLE BORDER="0" CELLSPACING="4">
+          <TR><TD><I>«execution environment»</I><BR/><B>Expo Go</B> (React Native, SDK 58)</TD></TR>
+          <TR><TD BORDER="1" BGCOLOR="#f7fbf8" CELLPADDING="5"><I>«artifact»</I><BR/><B>Mobile app</B><BR/>App.js, src/api.js</TD></TR>
+        </TABLE>
+      </TD></TR>
+    </TABLE>>];
+
+  {rank=same; chrome; php; python; phone}
+
+  chrome -> server [label="HTTP/JSON + Basic auth\nlocalhost:8080"];
+  php    -> server [label="HTTP/JSON + Basic auth\n(cURL)"];
+  python -> server [label="HTTP/JSON + Basic auth\n(requests)"];
+  phone  -> server [label="HTTP/JSON + Basic auth\nover Wi-Fi (LAN IP:8080)"];
+  server -> gemini [label="HTTPS/JSON\nx-goog-api-key\n(java.net.http.HttpClient)"];
+}

@@ -1,0 +1,131 @@
+---
+title: Class / Module Diagram - Client Applications
+config:
+  layout: elk
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+    direction TB
+
+    class TranslatorResource {
+        <<REST endpoint on the server>>
+        POST /api/translator/translate
+        GET  /api/translator/translate
+        GET  /api/health
+    }
+
+    namespace ChromeExtension {
+        class background_js {
+            <<service worker>>
+            -MENU_ID = "translate-to-darija"
+            +onInstalled() creates context menu
+            +onClicked(info, tab) opens side panel
+            -deliverSelection(info, tab) Promise
+        }
+        class sidepanel_js {
+            <<side panel page>>
+            -settings
+            -doTranslate() Promise
+            -handlePendingSelection(pending) Promise
+            -checkServer() Promise
+            -onSaveSettings() Promise
+            -copyTranslation() Promise
+        }
+        class api_js {
+            <<ES module>>
+            +DEFAULT_SETTINGS
+            +loadSettings() Promise
+            +saveSettings(settings) Promise
+            +translate(text, script, settings) Promise
+            +health(settings) Promise
+        }
+        class ApiError_ext {
+            <<api.js>>
+            +status: number
+        }
+    }
+
+    namespace PhpClient {
+        class DarijaTranslatorClient {
+            -string baseUrl
+            -string username
+            -string password
+            -int timeout
+            +translate(string text, string script) array
+            +health() array
+            -request(method, path, body, authenticate) array
+        }
+        class DarijaTranslatorException {
+            <<extends RuntimeException>>
+        }
+        class index_php {
+            <<web page (form)>>
+        }
+        class cli_php {
+            <<command line>>
+        }
+    }
+
+    namespace PythonClient {
+        class PyDarijaTranslatorClient {
+            <<DarijaTranslatorClient>>
+            +str base_url
+            +float timeout
+            +Session session
+            +translate(text, script) Translation
+            +health() dict
+        }
+        class Translation {
+            <<dataclass>>
+            +str source_text
+            +str detected_language
+            +str translation
+            +str script
+            +str model
+            +int duration_ms
+        }
+        class TranslatorError {
+            <<extends Exception>>
+            +int status
+        }
+    }
+
+    namespace MobileApp {
+        class App {
+            <<React component>>
+            -text, script, result, error, loading
+            -settings
+            -onTranslate() Promise
+            -onShare() Promise
+            -onTestConnection() Promise
+        }
+        class mobile_api_js {
+            <<src/api.js>>
+            +base64(text) string
+            +translate(text, script, settings) Promise
+            +health(settings) Promise
+        }
+        class config_js {
+            <<src/config.js>>
+            +DEFAULT_SETTINGS
+        }
+    }
+
+    background_js ..> sidepanel_js : pendingSelection via chrome.storage.session
+    sidepanel_js --> api_js
+    api_js ..> ApiError_ext : throws
+    api_js ..> TranslatorResource : HTTP + Basic auth
+
+    index_php --> DarijaTranslatorClient
+    cli_php --> DarijaTranslatorClient
+    DarijaTranslatorClient ..> DarijaTranslatorException : throws
+    DarijaTranslatorClient ..> TranslatorResource : HTTP + Basic auth
+
+    PyDarijaTranslatorClient ..> Translation : returns
+    PyDarijaTranslatorClient ..> TranslatorError : raises
+    PyDarijaTranslatorClient ..> TranslatorResource : HTTP + Basic auth
+
+    App --> mobile_api_js
+    App --> config_js
+    mobile_api_js ..> TranslatorResource : HTTP + Basic auth
